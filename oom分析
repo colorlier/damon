@@ -1,0 +1,280 @@
+/********************************* oom问题分析  *******************************************/
+
+1. 问题log
+------------------------------------------------------------------------------------------------------------------------
+29436 <<<test_start>>>
+29437 tag=min_free_kbytes stime=13598
+29438 cmdline="min_free_kbytes"
+29439 contacts=""
+29440 analysis=exit
+29441 <<<test_output>>>
+29442 incrementing stop
+29443 tst_test.c:1236: INFO: Timeout per run is disabled
+29444 mem.c:707: INFO: set overcommit_memory to 2
+29445 mem.c:707: INFO: set min_free_kbytes to 2712
+29446 memfree is 351648 kB before eatup mem
+29447 memfree is 251332 kB after eatup mem
+29448 mem.c:707: INFO: set min_free_kbytes to 5424
+29449 memfree is 351400 kB before eatup mem
+29450 memfree is 251456 kB after eatup mem
+29451 mem.c:707: INFO: set min_free_kbytes to 10217
+29452 memfree is 351400 kB before eatup mem
+29453 memfree is 251456 kB after eatup mem
+29454 mem.c:707: INFO: set overcommit_memory to 0
+29455 mem.c:707: INFO: set min_free_kbytes to 2712
+29456 memfree is 351400 kB before eatup mem
+29457 [13644.215323] min_free_kbytes invoked oom-killer: gfp_mask=0x100cca(GFP_HIGHUSER_MOVABLE), order=0, oom_score_adj=0
+29458 [13644.227797] CPU: 0 PID: 4144 Comm: min_free_kbytes Not tainted 5.4.42-04176-g529eb07-dirty #219
+29459 [13644.238138] Call Trace:
+29460 [13644.241336] [<ffffffe0031e616a>] walk_stackframe+0x0/0xa0
+29461 [13644.248045] [<ffffffe0031e62ca>] show_stack+0x2a/0x34
+29462 [13644.254424] [<ffffffe0033ee3fe>] dump_stack+0x20/0x28
+29463 [13644.260835] [<ffffffe003257a24>] dump_header+0x48/0x1e0
+29464 [13644.267370] [<ffffffe003257316>] oom_kill_process+0x2aa/0x2ac
+29465 [13644.274472] [<ffffffe00325774e>] out_of_memory+0x90/0x2c4
+29466 [13644.281274] [<ffffffe00327fe98>] __alloc_pages_slowpath+0x658/0x756
+29467 [13644.288977] [<ffffffe0032800ce>] __alloc_pages_nodemask+0x138/0x15c
+29468 [13644.296753] [<ffffffe003271716>] __handle_mm_fault+0x512/0x7ea
+29469 [13644.303985] [<ffffffe003271a16>] handle_mm_fault+0x28/0x32
+29470 [13644.310800] [<ffffffe0031e746c>] do_page_fault+0xb8/0x2d6
+29471 [13644.317560] [<ffffffe0031e5020>] ret_from_exception+0x0/0xc
+29472 [13644.324474] Mem-Info:
+29473 [13644.327709] active_anon:92430 inactive_anon:30318 isolated_anon:0
+29474 [13644.327709]  active_file:0 inactive_file:0 isolated_file:0
+29475 [13644.327709]  unevictable:0 dirty:0 writeback:0 unstable:0
+29476 [13644.327709]  slab_reclaimable:790 slab_unreclaimable:1181
+29477 [13644.327709]  mapped:621 shmem:36941 pagetables:192 bounce:0
+29478 [13644.327709]  free:2197 free_pcp:47 free_cma:0
+29479 [13644.365202] Node 0 active_anon:369720kB inactive_anon:121272kB active_file:0kB inactive_file:0kB unevictable:0kB isolated(anon):0kB isolated(file):0kB mapped:2484kB dirty:0kB       writeback:0kB shmem:147764kB writeback_tmp:0kB unstable:0kB all_unreclaimable? yes
+29480 [13644.391898] DMA32 free:8788kB min:8808kB low:9484kB high:10160kB active_anon:369720kB inactive_anon:121272kB active_file:0kB inactive_file:0kB unevictable:0kB writepending:0kB       present:522240kB managed:510868kB mlocked:0kB kernel_stack:168kB pagetables:768kB bounce:0kB free_pcp:188kB local_pcp:188kB free_cma:0kB
+29481 [13644.423710] lowmem_reserve[]: 0 0 0
+29482 [13644.428123] DMA32: 3*4kB (E) 11*8kB (UE) 5*16kB (UE) 7*32kB (UE) 13*64kB (UME) 5*128kB (UE) 11*256kB (UME) 4*512kB (UM) 2*1024kB (U) 0*2048kB 0*4096kB = 8788kB
+29483 [13644.445505] 36941 total pagecache pages
+29484 [13644.450435] 0 pages in swap cache
+29485 [13644.454623] Swap cache stats: add 0, delete 0, find 0/0 
+29486 [13644.460913] Free swap  = 0kB
+29487 [13644.464540] Total swap = 0kB
+29488 [13644.468164] 130560 pages RAM
+29489 [13644.471764] 0 pages HighMem/MovableOnly
+29490 [13644.476472] 2843 pages reserved
+29491 [13644.480366] Tasks state (memory values in pages):
+29492 [13644.486106] [  pid  ]   uid  tgid total_vm      rss pgtables_bytes swapents oom_score_adj name
+29493 [13644.496503] [     44]     0    44      948      513    24576        0             0 ash
+29494 [13644.506122] [   2860]     0  2860      403      336    20480        0             0 runltp
+29495 [13644.516027] [   2974]     0  2974      506      320    20480        0             0 ltp-pan
+29496 [13644.526039] [   4138]     0  4138      426      330    28672        0             0 min_free_kbytes
+29497 [13644.536826] [   4139]     0  4139      426      316    28672        0             0 min_free_kbytes
+29498 [13644.547665] [   4144]     0  4144    86186    85922   712704        0             0 min_free_kbytes
+29499 [13644.558389] oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),task=min_free_kbytes,pid=4144,uid=0
+29500 [13644.569412] Out of memory: Killed process 4144 (min_free_kbytes) total-vm:344744kB, anon-rss:342568kB, file-rss:0kB, shmem-rss:1120kB, UID:0 pgtables:696kB oom_score_adj:0
+29501 [13646.816763] oom_reaper: reaped process 4144 (min_free_kbytes), now anon-rss:0kB, file-rss:0kB, shmem-rss:0kB
+29502 mem.c:707: INFO: set min_free_kbytes to 5424
+29503 memfree is 351400 kB before eatup mem
+29504 [13670.079696] min_free_kbytes invoked oom-killer: gfp_mask=0x100cca(GFP_HIGHUSER_MOVABLE), order=0, oom_score_adj=0
+29505 [13670.092177] CPU: 0 PID: 4145 Comm: min_free_kbytes Not tainted 5.4.42-04176-g529eb07-dirty #219
+29506 [13670.102498] Call Trace:
+29507 [13670.105683] [<ffffffe0031e616a>] walk_stackframe+0x0/0xa0
+29508 [13670.112641] [<ffffffe0031e62ca>] show_stack+0x2a/0x34
+29509 [13670.119039] [<ffffffe0033ee3fe>] dump_stack+0x20/0x28
+29510 [13670.125430] [<ffffffe003257a24>] dump_header+0x48/0x1e0
+29511 [13670.131956] [<ffffffe003257316>] oom_kill_process+0x2aa/0x2ac
+29512 [13670.139053] [<ffffffe00325774e>] out_of_memory+0x90/0x2c4
+29513 [13670.146082] [<ffffffe00327fe98>] __alloc_pages_slowpath+0x658/0x756
+29514 [13670.154022] [<ffffffe0032800ce>] __alloc_pages_nodemask+0x138/0x15c
+29515 [13670.161966] [<ffffffe003271716>] __handle_mm_fault+0x512/0x7ea
+29516 [13670.169183] [<ffffffe003271a16>] handle_mm_fault+0x28/0x32
+29517 [13670.176022] [<ffffffe0031e746c>] do_page_fault+0xb8/0x2d6
+29518 [13670.182743] [<ffffffe0031e5020>] ret_from_exception+0x0/0xc
+29519 [13670.189499] Mem-Info:
+29520 [13670.192674] active_anon:92715 inactive_anon:30318 isolated_anon:0
+29521 [13670.192674]  active_file:0 inactive_file:0 isolated_file:0
+29522 [13670.192674]  unevictable:0 dirty:0 writeback:0 unstable:0
+29523 [13670.192674]  slab_reclaimable:790 slab_unreclaimable:1181
+29524 [13670.192674]  mapped:621 shmem:36941 pagetables:193 bounce:0
+29525 [13670.192674]  free:1918 free_pcp:43 free_cma:0
+29526 [13670.230048] Node 0 active_anon:370860kB inactive_anon:121272kB active_file:0kB inactive_file:0kB unevictable:0kB isolated(anon):0kB isolated(file):0kB mapped:2484kB dirty:0kB       writeback:0kB shmem:147764kB writeback_tmp:0kB unstable:0kB all_unreclaimable? yes
+29527 [13670.256702] DMA32 free:7672kB min:9520kB low:16972kB high:18328kB active_anon:370860kB inactive_anon:121272kB active_file:0kB inactive_file:0kB unevictable:0kB writepending:0k      B present:522240kB managed:510868kB mlocked:0kB kernel_stack:168kB pagetables:772kB bounce:0kB free_pcp:172kB local_pcp:172kB free_cma:0kB
+29528 [13670.288593] lowmem_reserve[]: 0 0 0
+29529 [13670.293034] DMA32: 4*4kB (ME) 11*8kB (ME) 5*16kB (ME) 2*32kB (ME) 10*64kB (UME) 5*128kB (UME) 10*256kB (UME) 3*512kB (UM) 2*1024kB (M) 0*2048kB 0*4096kB = 7672kB
+29530 [13670.310803] 36941 total pagecache pages
+29531 [13670.315546] 0 pages in swap cache
+29532 [13670.319701] Swap cache stats: add 0, delete 0, find 0/0
+29533 [13670.325978] Free swap  = 0kB
+29534 [13670.329353] Total swap = 0kB          
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+2. oom killer的原因
+当物理内存和交换空间不够用时，OOM Killer 就会选择杀死进程，那么它是怎样知道要先杀死哪个进程呢？其实 Linux 的每个进程都有一个 oom_score (位于/proc/<pid>/oom_score)，这个值越大，就越有可能被 OOM Killer 选中。oom_score 的值是由很多因素共同决定的，这里列举几个因素：
+(1)如果进程消耗的内存越大，它的 oom_score 通常也会越大。
+(2)如果进程运行了很长时间，并且消耗很多 CPU 时间，那么通常它的 oom_score 会偏小。
+(3)如果进程以 superuser 的身份运行，那么它的 oom_score 也会偏小。
+如何才能尽量防止某个重要的进程被杀死呢？Linux每个进程都有一个 oom_adj (位于/proc/<pid>/oom_adj)，这个值的范围是 [-17, +15]，进程的 oom_adj 会影响 oom_score 的计算，也就是说，我们可以通过调小进程的 oom_adj 从而降低进程的 oom_score。对于一些比较重要的进程，例如 MySQL，我们想尽量避免它被 OOM Killer 杀死，这时候就可以调低它的 oom_adj 的值，例如：
+
+$ sudo echo -10 > /proc/$(pidof mysqld)/oom_adj
+
+
+3. 问题分析
+
+[13644.215323] min_free_kbytes invoked oom-killer: gfp_mask=0x100cca(GFP_HIGHUSER_MOVABLE), order=0, oom_score_adj=0
+
+说明：oom-killer是由min_free_kbytes引起的，min_free_kbytes申请内存失败导致oom-killer。order=0表示申请内存的大小为4K，gfp_mask表示申请内存的掩码标志，GFP_HIGHUSER_MOVABLE表示分配可以移动的页面。
+
+gfp_mask部分的解读参考https://blog.csdn.net/farmwang/article/details/66975128
+
+#define GFP_HIGHUSER_MOVABLE    (__GFP_WAIT | __GFP_IO | __GFP_FS | \
+				                 __GFP_HARDWALL | __GFP_HIGHMEM | __GFP_MOVABLE) /* 申请可移动的内存 */
+
+
+
+__GFP_WAIT,__GFP_IO,__GFP_FS,__GFP_HARDWALL表示内存分配标志：
+
+#define __GFP_WAIT    ((__force gfp_t)___GFP_WAIT) /* 内存分配的过程中可以被打断 */
+#define __GFP_IO    ((__force gfp_t)___GFP_IO)     /* 内存分配的过程中可进行IO操作，也就是说分配过程中如果需要换出页，必须设置该标志，才能将换出的页写入磁盘 */
+#define __GFP_FS    ((__force gfp_t)___GFP_FS)     /* 内存分配过程中可执行VFS操作，也就是可以调用VFS的接口 */
+#define __GFP_HARDWALL ((__force gfp_t)___GFP_HARDWALL)       /* 只能在当前进程可运行的cpu关联的内存节点上分配内存，如果进程可在所有cpu上运行，该标志无意义 */
+
+
+___GFP_HIGHMEM 和 __GFP_MOVABLE 表示内存域的修饰符，申请内存扫描的顺序为： ___GFP_HIGHMEM - ZONE_HIGHMEM->ZONE_NORMAL->ZONE_DMA32->ZONE_DMA
+
+
+出问题的平台内存节点只有一个node、一个zone，通过/proc/zoneinfo可以看到zone的情况，了解zone可以参考https://blog.csdn.net/farmwang/article/details/66975372文档
+
+
+---------------------------------------------------------------------------------------------------------------------
+/ltp-test # cat /proc/zoneinfo 
+Node 0, zone    DMA32
+  per-node stats
+      nr_inactive_anon 29459
+      nr_active_anon 7556
+      nr_inactive_file 0
+      nr_active_file 0
+      nr_unevictable 0
+      nr_slab_reclaimable 796
+      nr_slab_unreclaimable 1203
+      nr_isolated_anon 0
+      nr_isolated_file 0
+      workingset_nodes 0
+      workingset_refault 0
+      workingset_activate 0
+      workingset_restore 0
+      workingset_nodereclaim 0
+      nr_anon_pages 62
+      nr_mapped    511
+      nr_file_pages 36962
+      nr_dirty     0
+      nr_writeback 0
+      nr_writeback_temp 0
+      nr_shmem     36962
+      nr_shmem_hugepages 0
+      nr_shmem_pmdmapped 0
+      nr_file_hugepages 0
+      nr_file_pmdmapped 0
+      nr_anon_transparent_hugepages 0
+      nr_unstable  0
+      nr_vmscan_write 0
+      nr_vmscan_immediate_reclaim 0
+      nr_dirtied   0
+      nr_written   0
+      nr_kernel_misc_reclaimable 0
+  pages free     87962
+        min      678
+        low      847
+        high     1016
+        spanned  130560
+        present  130560
+        managed  127717
+        protection: (0, 0, 0)
+      nr_free_pages 87962
+      nr_zone_inactive_anon 29459
+      nr_zone_active_anon 7556
+      nr_zone_inactive_file 0
+      nr_zone_active_file 0
+      nr_zone_unevictable 0
+      nr_zone_write_pending 0
+      nr_mlock     0
+      nr_page_table_pages 10
+      nr_kernel_stack 136
+      nr_bounce    0
+      nr_free_cma  0
+  pagesets
+    cpu: 0
+              count: 153
+              high:  186
+              batch: 31
+  node_unreclaimable:  1
+  start_pfn:           262656
+Node 0, zone   Normal
+  pages free     0
+        min      0
+        low      0
+        high     0
+        spanned  0
+        present  0
+        managed  0
+        protection: (0, 0, 0)
+Node 0, zone  Movable
+  pages free     0
+        min      0
+        low      0
+        high     0
+        spanned  0
+        present  0
+        managed  0
+        protection: (0, 0, 0)
+/ltp-test # 
+
+---------------------------------------------------------------------------------------------------------------------
+
+zone结构体中包含wartermark变量，定义内存回收的水线，有三种水线：WMARK_HIGH、WMARK_LOW、WMARK_MIN。内核线程kswapd检测到不同的水线值会进行不同的处理，当空闲page数大于high时，内存域状态理想，不需要进行内存回收；
+当空闲page数低于low时，开始进行内存回收，将page换出到硬盘；当空闲page数低于min时，表示内存回收的压力很重，因为内存域中的可用page数已经很少了，必须加快进行内存回收。根据/proc/zoneinfo中的信息可以看到，DMA32这个zone
+三个水位分别是（单位为页）：min 678，low 847，high 1016
+
+
+|---------------------------------------------------------------------------------------------------------------------|
+29472 [13644.324474] Mem-Info:
+29473 [13644.327709] active_anon:92430 inactive_anon:30318 isolated_anon:0
+29474 [13644.327709]  active_file:0 inactive_file:0 isolated_file:0
+29475 [13644.327709]  unevictable:0 dirty:0 writeback:0 unstable:0
+29476 [13644.327709]  slab_reclaimable:790 slab_unreclaimable:1181
+29477 [13644.327709]  mapped:621 shmem:36941 pagetables:192 bounce:0
+29478 [13644.327709]  free:2197 free_pcp:47 free_cma:0
+29479 [13644.365202] Node 0 active_anon:369720kB inactive_anon:121272kB active_file:0kB inactive_file:0kB unevictable:0kB isolated(anon):0kB isolated(file):0kB mapped:2484kB dirty:0kB       writeback:0kB shmem:147764kB writeback_tmp:0kB unstable:0kB all_unreclaimable? yes
+29480 [13644.391898] DMA32 free:8788kB min:8808kB low:9484kB high:10160kB active_anon:369720kB inactive_anon:121272kB active_file:0kB inactive_file:0kB unevictable:0kB writepending:0kB       present:522240kB managed:510868kB mlocked:0kB kernel_stack:168kB pagetables:768kB bounce:0kB free_pcp:188kB local_pcp:188kB free_cma:0kB
+|---------------------------------------------------------------------------------------------------------------------|
+这段信息输出的是发生oom时meminfo的信息，可以参考博客：http://linuxperf.com/?p=142的
+
+active_anon:92430 inactive_anon:30318 
+这些值的单位是页，也就是4k，所以可以看下面这段会更清晰一点。从下面可以看到active_anon:369720kB inactive_anon:121272kB，active和inactive的匿名页占用了大量的空间，导致了oom的发生。
+
+29479 [13644.365202] Node 0 active_anon:369720kB inactive_anon:121272kB active_file:0kB inactive_file:0kB unevictable:0kB isolated(anon):0kB isolated(file):0kB mapped:2484kB dirty:0kB       writeback:0kB shmem:147764kB writeback_tmp:0kB unstable:0kB all_unreclaimable? yes
+29480 [13644.391898] DMA32 free:8788kB min:8808kB low:9484kB high:10160kB active_anon:369720kB inactive_anon:121272kB active_file:0kB inactive_file:0kB unevictable:0kB writepending:0kB       present:522240kB managed:510868kB mlocked:0kB kernel_stack:168kB pagetables:768kB bounce:0kB free_pcp:188kB local_pcp:188kB free_cma:0kB
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
