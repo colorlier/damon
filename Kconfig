@@ -1,0 +1,6 @@
+config DEMO_DRIVER
+	tristate "demo driver for test dma_alloc_coherent"
+	default y
+	---help---
+	demo driver for test dma_alloc_coherent
+
